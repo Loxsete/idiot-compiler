@@ -5,13 +5,17 @@ typedef enum {
 	TOK_NUMBER,
 	TOK_IDENT,
 	TOK_SYMBOL,
-	TOK_STRING
+	TOK_STRING,
+	TOK_STAR,
+	TOK_AMP,
+	TOK_ARROW
 } TokenType;
 
 typedef enum {
     VAR_INT,
     VAR_CHAR,
-    VAR_BOOL
+    VAR_BOOL,
+    VAR_PTR
 } VarType;
 
 typedef struct {
@@ -55,6 +59,10 @@ typedef struct {
     int if_id;
 
     int has_newline;
+
+    int is_deref; // *x
+    int is_ref;   // &x
+    int deref_assign; // *x = ...
 } AST;
 
 #endif

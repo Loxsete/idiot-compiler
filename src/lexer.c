@@ -58,6 +58,20 @@ int tokenize(const char *code, Token *tokens) {
             while (*p && *p != '\n') p++;
             continue;
         }
+        if (*p == '*') {
+        	tokens[count].type = TOK_STAR;
+        	tokens[count].text[0] = '*';
+        	tokens[count].text[1] = '\0';
+        	count++; p++;
+        	continue;
+        }
+        if (*p == '&') {
+            tokens[count].type    = TOK_AMP;
+            tokens[count].text[0] = '&';
+            tokens[count].text[1] = '\0';
+            count++; p++;
+            continue;
+        }
         if (*p == '+' || *p == '-' || *p == '*' || *p == '/' ||
             *p == '(' || *p == ')' || *p == ',' ||
             *p == '{' || *p == '}') {

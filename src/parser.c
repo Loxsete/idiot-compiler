@@ -4,18 +4,15 @@
 
 #include "parser.h"
 
-
 static int sym(const Token *t, const char *s) {
-
     return strcmp(t->text, s) == 0;
 }
-
 
 AST parse(Token *tokens, int count) {
     AST a;
     memset(&a, 0, sizeof(a));
-    a.if_id    = -1;
-    a.right    = -1;
+    a.if_id = -1;
+    a.right = -1;
 
     if (sym(&tokens[0], "fn")) {
         a.type = AST_FUNC_DEF;
@@ -76,7 +73,29 @@ AST parse(Token *tokens, int count) {
         return a;
     }
 
-    
+    if (sym(&tokens[0], "*") && tokens[1].type == TOK_IDENT && sym(&tokens[2], "=")) {
+        a.type         = AST_ASSIGN;
+        a.deref_assign = 1;
+        strcpy(a.var,      tokens[1].text);
+        strcpy(a.left_str, tokens[3].text);
+        return a;
+    }
+
+    if (tokens[0].type == TOK_IDENT && strcmp(tokens[0].text, "ptr") == 0
+        && sym(&tokens[1], "*"))
+    {
+        a.type     = AST_ASSIGN;
+        a.var_type = VAR_PTR;
+        strcpy(a.var, tokens[2].text);
+        if (sym(&tokens[4], "&")) {
+            a.is_ref = 1;
+            strcpy(a.left_str, tokens[5].text);
+        } else {
+            strcpy(a.left_str, tokens[4].text);
+        }
+        return a;
+    }
+
     if (tokens[0].type == TOK_IDENT &&
         (strcmp(tokens[0].text, "int")  == 0 ||
          strcmp(tokens[0].text, "char") == 0 ||
@@ -86,13 +105,13 @@ AST parse(Token *tokens, int count) {
             fprintf(stderr, "parser: bad declaration near '%s'\n", tokens[1].text);
             exit(1);
         }
-    
+
         if      (strcmp(tokens[0].text, "int")  == 0) a.var_type = VAR_INT;
         else if (strcmp(tokens[0].text, "char") == 0) a.var_type = VAR_CHAR;
         else if (strcmp(tokens[0].text, "bool") == 0) a.var_type = VAR_BOOL;
-    
+
         strcpy(a.var, tokens[1].text);
-    
+
         if (a.var_type == VAR_CHAR && tokens[3].type == TOK_STRING) {
             a.type = AST_ASSIGN_STR;
             char *text = tokens[3].text;
@@ -102,6 +121,10 @@ AST parse(Token *tokens, int count) {
                 a.has_newline = 1;
             }
             strcpy(a.left_str, text);
+        } else if (sym(&tokens[3], "*") && tokens[4].type == TOK_IDENT) {
+            a.type     = AST_ASSIGN;
+            a.is_deref = 1;
+            strcpy(a.left_str, tokens[4].text);
         } else {
             a.type = AST_ASSIGN;
             strcpy(a.left_str, tokens[3].text);

@@ -14,6 +14,30 @@ static void emit_node(FILE *f, AST *a, int idx)
     switch (a->type) {
 
     case AST_ASSIGN:
+
+        if (a->deref_assign) {
+            if (is_num(a->left_str))
+                fprintf(f, "    mov eax, %s\n", a->left_str);
+            else
+                fprintf(f, "    mov eax, [%s]\n", a->left_str);
+            fprintf(f, "    mov rcx, [%s]\n", a->var);
+            fprintf(f, "    mov [rcx], eax\n");
+            break;
+        }
+
+        if (a->is_ref) {
+            fprintf(f, "    lea rax, [%s]\n", a->left_str);
+            fprintf(f, "    mov [%s], rax\n", a->var);
+            break;
+        }
+
+        if (a->is_deref) {
+            fprintf(f, "    mov rax, [%s]\n", a->left_str);
+            fprintf(f, "    mov eax, [rax]\n");
+            fprintf(f, "    mov [%s], eax\n", a->var);
+            break;
+        }
+
         if (is_num(a->left_str))
             fprintf(f, "    mov eax, %s\n", a->left_str);
         else
@@ -131,6 +155,7 @@ static void emit_data(FILE *f, AST *nodes, int n)
             if (!dup) {
                 if      (a->var_type == VAR_BOOL) fprintf(f, "%s db 0\n", a->var);
                 else if (a->var_type == VAR_INT)  fprintf(f, "%s dd 0\n", a->var);
+                else if (a->var_type == VAR_PTR)  fprintf(f, "%s dq 0\n", a->var);
                 else                              fprintf(f, "%s dd 0\n", a->var);
                 strcpy(declared[dc++], a->var);
             }
