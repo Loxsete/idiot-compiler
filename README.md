@@ -7,7 +7,7 @@ Inspired by my earlier [QCC](https://github.com/Loxsete/qcc) project, but more a
 
 ## Build
 ```bash
-gcc main.c -o compiler
+make
 ```
 
 ## Usage
@@ -28,11 +28,11 @@ print(x)
 
 ### Variables & Math
 ```
-x = 10
-x = 20 + 5
-x = 20 - 5
-x = 20 * 5
-x = 20 / 5
+int x = 10
+int x = 20 + 5
+int = 20 - 5
+int = 20 * 5
+int = 20 / 5
 ```
 
 ### If / Else

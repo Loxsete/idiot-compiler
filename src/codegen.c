@@ -73,7 +73,7 @@ static void emit_node(FILE *f, AST *a, int idx)
             "    lea rsi, [rel str_%d]\n"
             "    mov rdx, str_%d_len\n"
             "    syscall\n",
-            a->if_id, a->if_id);
+            idx, idx);
         break;
 
     case AST_FUNC_CALL:

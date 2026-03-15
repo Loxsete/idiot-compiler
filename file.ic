@@ -1,6 +1,8 @@
 fn main() {
-	int a = "2"
-	int b = "3"
-	int x = b + a
-	print(x)
+	int x = 10
+	if x == 10 {
+	    print("yes\n")
+	} else {
+	    print("no\n")
+	}
 }
