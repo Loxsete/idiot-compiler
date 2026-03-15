@@ -15,7 +15,8 @@ typedef enum {
     VAR_INT,
     VAR_CHAR,
     VAR_BOOL,
-    VAR_PTR
+    VAR_PTR,
+    VAR_LONG
 } VarType;
 
 typedef struct {
@@ -34,7 +35,11 @@ typedef enum {
     AST_FUNC_CALL,
     AST_IF,
     AST_ELSE,
-    AST_IF_END
+    AST_IF_END,
+    AST_WHILE,
+    AST_WHILE_END,
+    AST_FOR,
+    AST_FOR_END
 } ASTType;
 
 typedef struct {
@@ -57,12 +62,19 @@ typedef struct {
     char cmp_right[64];
 
     int if_id;
+	int while_id;
 
     int has_newline;
 
     int is_deref; // *x
     int is_ref;   // &x
     int deref_assign; // *x = ...
+
+    char for_init_var[64];
+    char for_init_val[64];
+    char for_step_var[64];
+    char for_step_op[4];
+    char for_step_val[64];
 } AST;
 
 #endif

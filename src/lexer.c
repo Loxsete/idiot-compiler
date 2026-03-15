@@ -73,8 +73,8 @@ int tokenize(const char *code, Token *tokens) {
             continue;
         }
         if (*p == '+' || *p == '-' || *p == '*' || *p == '/' ||
-            *p == '(' || *p == ')' || *p == ',' ||
-            *p == '{' || *p == '}') {
+                    *p == '(' || *p == ')' || *p == ',' ||
+                    *p == '{' || *p == '}' || *p == ';') {
             tokens[count].type     = TOK_SYMBOL;
             tokens[count].text[0]  = *p;
             tokens[count].text[1]  = '\0';

@@ -1,8 +1,62 @@
+fn add(a, b) {
+    int result = a + b
+    print(result)
+}
+
+fn countdown(n) {
+    while n > 0 {
+        print(n)
+        n = n - 1
+    }
+}
+
 fn main() {
-	int x = 10
-	if x == 10 {
-	    print("yes\n")
-	} else {
-	    print("no\n")
-	}
+    int x = 10
+    int y = 20
+
+    if x < y {
+        print("x is less than y\n")
+    } else {
+        print("x is not less than y\n")
+    }
+
+    if x == 10 {
+        print("x is 10\n")
+    } else {
+        print("x is not 10\n")
+    }
+
+    if x != y {
+        print("x and y are different\n")
+    } else {
+        print("x and y are equal\n")
+    }
+
+    add(x, y)
+
+    int i = 0
+    int sum = 0
+    while i < 100 {
+        sum = sum + i
+        i = i + 1
+    }
+    print(sum)
+
+    for (i = 0; i < 5; i = i + 1) {
+        print("for loop iteration\n")
+    }
+
+    long big = 1000000
+    long total = 0
+    for (i = 0; i < 1000000; i = i + 1) {
+        total = total + 1
+    }
+    print(total)
+
+    ptr* p = &x
+    print(x)
+    *p = 99
+    print(x)
+
+    countdown(5)
 }
