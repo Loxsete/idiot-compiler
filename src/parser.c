@@ -76,6 +76,45 @@ AST parse(Token *tokens, int count) {
         return a;
     }
 
+    
+    if (tokens[0].type == TOK_IDENT &&
+        (strcmp(tokens[0].text, "int")  == 0 ||
+         strcmp(tokens[0].text, "char") == 0 ||
+         strcmp(tokens[0].text, "bool") == 0))
+    {
+        if (count < 4 || !sym(&tokens[2], "=")) {
+            fprintf(stderr, "parser: bad declaration near '%s'\n", tokens[1].text);
+            exit(1);
+        }
+    
+        if      (strcmp(tokens[0].text, "int")  == 0) a.var_type = VAR_INT;
+        else if (strcmp(tokens[0].text, "char") == 0) a.var_type = VAR_CHAR;
+        else if (strcmp(tokens[0].text, "bool") == 0) a.var_type = VAR_BOOL;
+    
+        strcpy(a.var, tokens[1].text);
+    
+        if (a.var_type == VAR_CHAR && tokens[3].type == TOK_STRING) {
+            a.type = AST_ASSIGN_STR;
+            char *text = tokens[3].text;
+            int   len  = strlen(text);
+            if (len >= 2 && text[len-2] == '\\' && text[len-1] == 'n') {
+                text[len-2]  = '\0';
+                a.has_newline = 1;
+            }
+            strcpy(a.left_str, text);
+        } else {
+            a.type = AST_ASSIGN;
+            strcpy(a.left_str, tokens[3].text);
+            a.left = tokens[3].value;
+            if (count > 5) {
+                strcpy(a.op_sign,   tokens[4].text);
+                strcpy(a.right_str, tokens[5].text);
+                a.right = tokens[5].value;
+            }
+        }
+        return a;
+    }
+
     if (count < 3 || !sym(&tokens[1], "=")) {
         fprintf(stderr, "parser: syntax error near '%s'\n", tokens[0].text);
         exit(1);

@@ -1,21 +1,6 @@
-fn hello() {
-	print("Hello, world?\n")
-	print("Hello, compiler?\n")
-}
-
 fn main() {
-	hello()
-	compiler_stupid = 1
-	if compiler_stupid == 1 {
-		print("Compiler is stupid")
-	} else {
-		print("Compiler is not stupid")
-	}
-	x = 20 + 10
+	int a = "2"
+	int b = "3"
+	int x = b + a
 	print(x)
-	x = 20 * 2
-	print(x)
-	x = 20 / 2
-	print(x)
-	// This is comment and compiler dont see this anyway
 }

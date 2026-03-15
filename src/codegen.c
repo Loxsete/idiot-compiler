@@ -5,11 +5,9 @@
 
 #include "codegen.h"
 
-
 static int is_num(const char *s) { return isdigit((unsigned char)s[0]); }
 
 static const char *CALL_REGS[] = { "rdi", "rsi", "rdx", "rcx", "r8", "r9" };
-
 
 static void emit_node(FILE *f, AST *a, int idx)
 {
@@ -39,6 +37,9 @@ static void emit_node(FILE *f, AST *a, int idx)
             }
         }
         fprintf(f, "    mov [%s], eax\n", a->var);
+        break;
+
+    case AST_ASSIGN_STR:
         break;
 
     case AST_PRINT:
@@ -72,7 +73,7 @@ static void emit_node(FILE *f, AST *a, int idx)
             "    lea rsi, [rel str_%d]\n"
             "    mov rdx, str_%d_len\n"
             "    syscall\n",
-            idx, idx);
+            a->if_id, a->if_id);
         break;
 
     case AST_FUNC_CALL:
@@ -110,7 +111,6 @@ static void emit_node(FILE *f, AST *a, int idx)
     }
 }
 
-
 static void emit_data(FILE *f, AST *nodes, int n)
 {
     fprintf(f, "section .data\n");
@@ -129,9 +129,18 @@ static void emit_data(FILE *f, AST *nodes, int n)
             for (int j = 0; j < dc; j++)
                 if (strcmp(declared[j], a->var) == 0) { dup = 1; break; }
             if (!dup) {
-                fprintf(f, "%s dd 0\n", a->var);
+                if      (a->var_type == VAR_BOOL) fprintf(f, "%s db 0\n", a->var);
+                else if (a->var_type == VAR_INT)  fprintf(f, "%s dd 0\n", a->var);
+                else                              fprintf(f, "%s dd 0\n", a->var);
                 strcpy(declared[dc++], a->var);
             }
+        }
+        else if (a->type == AST_ASSIGN_STR) {
+            if (a->has_newline)
+                fprintf(f, "str_%d db \"%s\", 10\n", i, a->left_str);
+            else
+                fprintf(f, "str_%d db \"%s\"\n", i, a->left_str);
+            fprintf(f, "str_%d_len equ $ - str_%d\n", i, i);
         }
         else if (a->type == AST_FUNC_DEF) {
             for (int k = 0; k < a->arg_count; k++) {
@@ -153,7 +162,6 @@ static void emit_data(FILE *f, AST *nodes, int n)
         }
     }
 }
-
 
 static void emit_text(FILE *f, AST *nodes, int n)
 {
@@ -186,7 +194,6 @@ static void emit_text(FILE *f, AST *nodes, int n)
         "    xor rdi, rdi\n"
         "    syscall\n");
 }
-
 
 void codegen(FILE *out, AST *nodes, int node_count)
 {
