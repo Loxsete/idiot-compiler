@@ -14,7 +14,6 @@ static void emit_node(FILE *f, AST *a, int idx)
     switch (a->type) {
 
     case AST_ASSIGN:
-
         if (a->deref_assign) {
             if (is_num(a->left_str))
                 fprintf(f, "    mov eax, %s\n", a->left_str);
@@ -46,18 +45,15 @@ static void emit_node(FILE *f, AST *a, int idx)
         if (a->op_sign[0]) {
             int rn = is_num(a->right_str);
             if      (strcmp(a->op_sign, "+") == 0)
-                fprintf(f, rn ? "    add eax, %s\n"
-                              : "    add eax, [%s]\n", a->right_str);
+                fprintf(f, rn ? "    add eax, %s\n" : "    add eax, [%s]\n", a->right_str);
             else if (strcmp(a->op_sign, "-") == 0)
-                fprintf(f, rn ? "    sub eax, %s\n"
-                              : "    sub eax, [%s]\n", a->right_str);
+                fprintf(f, rn ? "    sub eax, %s\n" : "    sub eax, [%s]\n", a->right_str);
             else if (strcmp(a->op_sign, "*") == 0)
-                fprintf(f, rn ? "    imul eax, %s\n"
-                              : "    imul eax, [%s]\n", a->right_str);
+                fprintf(f, rn ? "    imul eax, %s\n" : "    imul eax, [%s]\n", a->right_str);
             else if (strcmp(a->op_sign, "/") == 0) {
                 fprintf(f, "    cdq\n");
-                if (rn) { fprintf(f, "    mov ecx, %s\n    idiv ecx\n", a->right_str); }
-                else      fprintf(f, "    idiv dword [%s]\n", a->right_str);
+                if (rn) fprintf(f, "    mov ecx, %s\n    idiv ecx\n", a->right_str);
+                else    fprintf(f, "    idiv dword [%s]\n", a->right_str);
             }
         }
         fprintf(f, "    mov [%s], eax\n", a->var);
@@ -69,35 +65,27 @@ static void emit_node(FILE *f, AST *a, int idx)
     case AST_PRINT:
         fprintf(f,
             "    mov eax, [%s]\n"
-            "    lea rsi, [rel num_buf+19]\n"
-            "    mov byte [rsi], 10\n"
-            "    dec rsi\n"
-            "    mov ecx, 10\n"
-            ".digit_loop_%d:\n"
-            "    xor edx, edx\n"
-            "    div ecx\n"
-            "    add dl, '0'\n"
-            "    mov [rsi], dl\n"
-            "    dec rsi\n"
-            "    test eax, eax\n"
-            "    jnz .digit_loop_%d\n"
-            "    inc rsi\n"
-            "    lea rdx, [rel num_buf+20]\n"
-            "    sub rdx, rsi\n"
-            "    mov rax, 1\n"
-            "    mov rdi, 1\n"
-            "    syscall\n",
-            a->var, idx, idx);
+            "    lea rdi, [rel fmt_int]\n"
+            "    mov esi, eax\n"
+            "    xor eax, eax\n"
+            "    call printf\n",
+            a->var);
         break;
 
     case AST_PRINT_STR:
-        fprintf(f,
-            "    mov rax, 1\n"
-            "    mov rdi, 1\n"
-            "    lea rsi, [rel str_%d]\n"
-            "    mov rdx, str_%d_len\n"
-            "    syscall\n",
-            idx, idx);
+        if (a->has_newline) {
+            fprintf(f,
+                "    lea rdi, [rel str_%d]\n"
+                "    call puts\n",
+                idx);
+        } else {
+            fprintf(f,
+                "    lea rdi, [rel fmt_str]\n"
+                "    lea rsi, [rel str_%d]\n"
+                "    xor eax, eax\n"
+                "    call printf\n",
+                idx);
+        }
         break;
 
     case AST_FUNC_CALL:
@@ -139,8 +127,13 @@ static void emit_data(FILE *f, AST *nodes, int n)
 {
     fprintf(f, "section .data\n");
 
-    for (int i = 0; i < n; i++)
-        if (nodes[i].type == AST_PRINT) { fprintf(f, "num_buf times 20 db 0\n"); break; }
+    int need_fmt_int = 0, need_fmt_str = 0;
+    for (int i = 0; i < n; i++) {
+        if (nodes[i].type == AST_PRINT) need_fmt_int = 1;
+        if (nodes[i].type == AST_PRINT_STR && !nodes[i].has_newline) need_fmt_str = 1;
+    }
+    if (need_fmt_int) fprintf(f, "fmt_int db \"%%d\", 10, 0\n");
+    if (need_fmt_str) fprintf(f, "fmt_str db \"%%s\", 0\n");
 
     char declared[64][256];
     int  dc = 0;
@@ -179,10 +172,7 @@ static void emit_data(FILE *f, AST *nodes, int n)
             }
         }
         else if (a->type == AST_PRINT_STR) {
-            if (a->has_newline)
-                fprintf(f, "str_%d db \"%s\", 10\n", i, a->var);
-            else
-                fprintf(f, "str_%d db \"%s\"\n", i, a->var);
+            fprintf(f, "str_%d db \"%s\", 0\n", i, a->var);
             fprintf(f, "str_%d_len equ $ - str_%d\n", i, i);
         }
     }
@@ -190,7 +180,12 @@ static void emit_data(FILE *f, AST *nodes, int n)
 
 static void emit_text(FILE *f, AST *nodes, int n)
 {
-    fprintf(f, "section .text\nglobal _start\n");
+    fprintf(f,
+            "section .text\n"
+            "default rel\n"
+            "global main\n"
+            "extern printf\n"
+            "extern puts\n");
 
     int in_func = 0;
 
@@ -198,7 +193,10 @@ static void emit_text(FILE *f, AST *nodes, int n)
         AST *a = &nodes[i];
 
         if (a->type == AST_FUNC_DEF) {
-            fprintf(f, "%s:\n", a->var);
+            if (strcmp(a->var, "main") == 0)
+                fprintf(f, "user_main:\n");
+            else
+                fprintf(f, "%s:\n", a->var);
             for (int j = 0; j < a->arg_count; j++)
                 fprintf(f, "    mov [%s], %s\n", a->args[j], CALL_REGS[j]);
             in_func = 1;
@@ -213,11 +211,10 @@ static void emit_text(FILE *f, AST *nodes, int n)
     }
 
     fprintf(f,
-        "_start:\n"
-        "    call main\n"
-        "    mov rax, 60\n"
-        "    xor rdi, rdi\n"
-        "    syscall\n");
+        "main:\n"
+        "    call user_main\n"
+        "    xor eax, eax\n"
+        "    ret\n");
 }
 
 void codegen(FILE *out, AST *nodes, int node_count)

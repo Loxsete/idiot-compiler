@@ -92,12 +92,13 @@ int main(int argc, char *argv[])
     char cmd[512];
     snprintf(cmd, sizeof(cmd), "nasm -felf64 %s -o build/program.o", output_asm);
     if (system(cmd) != 0) { fprintf(stderr, "nasm failed\n"); return 1; }
-    if (system("ld build/program.o -o program") != 0) {
+
+    if (system("gcc -no-pie build/program.o -o program") != 0) {
         fprintf(stderr, "ld failed\n");
         return 1;
     }
 
-    printf("done → build/program\n");
+    printf("done -> program\n");
     free(source);
     return 0;
 }
