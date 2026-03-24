@@ -64,6 +64,20 @@ static void emit_node(FILE *f, AST *a, int idx)
         break;
     }
 
+    case AST_ASSIGN_CALL:
+    	/* all arguments in reg (System V ABI)
+		some this: first argument ---> rdi, second argument ---> rsi ...
+    	*/
+    	for (int j = 0; j < a->arg_count; j++) {
+    	    if (is_num(a->args[j]))
+    	        fprintf(f, "    mov %s, %s\n", CALL_REGS[j], a->args[j]);
+    	    else
+    	        fprintf(f, "    mov %s, [%s]\n", CALL_REGS[j], a->args[j]);
+    	}
+    	fprintf(f, "    call %s\n", a->left_str);
+    	fprintf(f, "    mov [%s], eax\n", a->var);
+    	break;
+
     case AST_ASSIGN_STR:
         break;
 
@@ -112,6 +126,19 @@ static void emit_node(FILE *f, AST *a, int idx)
         }
         fprintf(f, "    call %s\n", a->var);
         break;
+
+    case AST_RETURN: {
+        if (a->left_str[0] != '\0') {
+            int is_long = (a->var_type == VAR_LONG);
+            const char *acc = is_long ? "rax" : "eax";
+            if (is_num(a->left_str))
+                fprintf(f, "    mov %s, %s\n", acc, a->left_str);
+            else
+                fprintf(f, "    mov %s, [%s]\n", acc, a->left_str);
+        }
+        fprintf(f, "    ret\n");
+        break;
+    }
 
     case AST_IF:
         if (is_num(a->cmp_left))
@@ -229,6 +256,15 @@ static void emit_data(FILE *f, AST *nodes, int n)
                 else if (a->var_type == VAR_PTR)  fprintf(f, "%s dq 0\n", a->var);
                 else if (a->var_type == VAR_LONG) fprintf(f, "%s dq 0\n", a->var);
                 else                              fprintf(f, "%s dd 0\n", a->var);
+                strcpy(declared[dc++], a->var);
+            }
+        }
+        else if (a->type == AST_ASSIGN_CALL) {
+            int dup = 0;
+            for (int j = 0; j < dc; j++)
+                if (strcmp(declared[j], a->var) == 0) { dup = 1; break; }
+            if (!dup) {
+                fprintf(f, "%s dd 0\n", a->var);
                 strcpy(declared[dc++], a->var);
             }
         }

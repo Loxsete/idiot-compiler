@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h> 
 #include "lexer.h"
 #include "parser.h"
 #include "codegen.h"
@@ -14,6 +15,11 @@ typedef struct {
     int verbose;
     int debug;
 } Options;
+
+// i idk, but i think its not need on another code 
+static int is_num_str(const char *s) {
+    return isdigit((unsigned char)s[0]);
+}
 
 static void usage(const char *prog)
 {
@@ -119,6 +125,18 @@ int main(int argc, char *argv[])
                     }
                 }
             }
+
+            else if (node.type == AST_RETURN) {
+                if (node.left_str[0] && !is_num_str(node.left_str)) {
+                    for (int v = 0; v < var_count; v++) {
+                        if (strcmp(var_table[v].name, node.left_str) == 0) {
+                            node.var_type = var_table[v].type;
+                            break;
+                        }
+                    }
+                }
+            }
+
             else if (node.type == AST_IF) {
                 node.if_id = if_counter;
                 if_stack[if_top++] = if_counter++;

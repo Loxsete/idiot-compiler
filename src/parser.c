@@ -108,6 +108,17 @@ AST parse(Token *tokens, int count) {
         strcpy(a.var, tokens[2].text);
         return a;
     }
+	// yeah return (james hatfield referenese yeah)
+    if (sym(&tokens[0], "return")) {
+	    a.type = AST_RETURN;
+	    if (count >= 2) {
+		    strcpy(a.left_str, tokens[1].text);
+		    a.var_type = VAR_INT;
+	    } else {
+		a.left_str[0] = '\0';
+	    }
+	    return a;
+    }
 
     if (tokens[0].type == TOK_IDENT && count >= 2 && sym(&tokens[1], "(")) {
         a.type = AST_FUNC_CALL;
@@ -177,6 +188,16 @@ AST parse(Token *tokens, int count) {
             a.type     = AST_ASSIGN;
             a.is_deref = 1;
             strcpy(a.left_str, tokens[4].text);
+        } else if (tokens[3].type == TOK_IDENT && count >= 5 && sym(&tokens[4], "(")) {
+            // this must work (i think) int x = func(args)
+            a.type = AST_ASSIGN_CALL;
+            strcpy(a.left_str, tokens[3].text);  // name func
+            int j = 5;
+            while (j < count && !sym(&tokens[j], ")")) {
+                if (tokens[j].type == TOK_NUMBER || tokens[j].type == TOK_IDENT)
+                    strcpy(a.args[a.arg_count++], tokens[j].text);
+                j++;
+        	}
         } else {
             if (tokens[3].type != TOK_IDENT && tokens[3].type != TOK_NUMBER)
                 parse_error("expected value in declaration", tokens[3].text);

@@ -39,7 +39,9 @@ typedef enum {
     AST_WHILE,
     AST_WHILE_END,
     AST_FOR,
-    AST_FOR_END
+    AST_FOR_END,
+    AST_ASSIGN_CALL,
+    AST_RETURN
 } ASTType;
 
 typedef struct {
