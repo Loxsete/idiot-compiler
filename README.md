@@ -99,6 +99,20 @@ fn main() {
 }
 ```
 
+### Returns
+
+Simple return. Just:
+```
+fn add(a, b) {
+    int result = a + b
+    return result
+}
+
+fn main() {
+    int x = add(3, 4)
+    print(x)
+}
+
 ### Pointers
 ```
 int x = 42
