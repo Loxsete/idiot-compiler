@@ -87,7 +87,7 @@ Heads up - declare `i` as `int` before the loop if you need it outside.
 
 ### Functions
 
-Up to 6 args. Don't try recursion, it'll blow up (all vars are global).
+Up to 6 args. Don't try recursion, it'll blow up (because all var are global).
 ```
 fn add(a, b) {
     int result = a + b
@@ -122,9 +122,26 @@ print(x)     // 42
 print(x)     // 99
 ```
 
+### Extern
+Call C func from libc
+```
+extern malloc
+extern free
+
+fn main() {
+	ptr* p = malloc(64)
+	free(p)
+}
+```
+To compile with another library, pass -l while compilling
+```
+./compiler file.ic -l m
+./compiler file.ic -l pthread
+```
+
 ### Comments
 ```
-// yeah this does nothing
+// PANTERA DOMINATION
 ```
 
 ---
@@ -136,6 +153,7 @@ print(x)     // 99
 | `-o <file>` | name the output binary (default: `a`) |
 | `-v`        | print each step as it happens         |
 | `--debug`   | don't clean up .asm and .o            |
+| `-l <lib>`  | link an external library (e.g. `-l m` for libm) |
 
 ---
 
