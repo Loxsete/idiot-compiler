@@ -140,6 +140,9 @@ static void emit_node(FILE *f, AST *a, int idx)
         break;
     }
 
+    case AST_EXTERN:
+        break;
+
     case AST_IF:
         if (is_num(a->cmp_left))
             fprintf(f, "    mov eax, %s\n", a->cmp_left);
@@ -305,11 +308,25 @@ static void emit_data(FILE *f, AST *nodes, int n)
 static void emit_text(FILE *f, AST *nodes, int n)
 {
     fprintf(f,
-            "section .text\n"
-            "default rel\n"
-            "global main\n"
-            "extern printf\n"
-            "extern puts\n");
+        "section .text\n"
+        "default rel\n"
+        "global main\n");
+    
+    int need_printf = 0, need_puts = 0;
+    for (int i = 0; i < n; i++) {
+        if (nodes[i].type == AST_PRINT)     need_printf = 1;
+        if (nodes[i].type == AST_PRINT_STR) {
+            if (nodes[i].has_newline) need_puts    = 1;
+            else                      need_printf  = 1;
+        }
+    }
+    if (need_printf) fprintf(f, "extern printf\n");
+    if (need_puts)   fprintf(f, "extern puts\n");
+    
+    for (int i = 0; i < n; i++) {
+        if (nodes[i].type == AST_EXTERN)
+            fprintf(f, "extern %s\n", nodes[i].var);
+    }
 
     int in_func = 0;
 

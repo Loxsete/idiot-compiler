@@ -41,7 +41,8 @@ typedef enum {
     AST_FOR,
     AST_FOR_END,
     AST_ASSIGN_CALL,
-    AST_RETURN
+    AST_RETURN,
+    AST_EXTERN
 } ASTType;
 
 typedef struct {

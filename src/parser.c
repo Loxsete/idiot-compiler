@@ -120,6 +120,14 @@ AST parse(Token *tokens, int count) {
 	    return a;
     }
 
+    if (sym(&tokens[0], "extern")) {
+	if (count < 2 || tokens[1].type != TOK_IDENT)
+            parse_error("what is this after extern?", tokens[0].text);
+	a.type = AST_EXTERN;
+	strcpy(a.var, tokens[1].text);
+	return a;
+    }
+
     if (tokens[0].type == TOK_IDENT && count >= 2 && sym(&tokens[1], "(")) {
         a.type = AST_FUNC_CALL;
         strcpy(a.var, tokens[0].text);

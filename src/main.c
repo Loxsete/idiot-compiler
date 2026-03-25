@@ -14,9 +14,9 @@ typedef struct {
     const char *output;
     int verbose;
     int debug;
+    char ldflags[256];
 } Options;
 
-// i idk, but i think its not need on another code 
 static int is_num_str(const char *s) {
     return isdigit((unsigned char)s[0]);
 }
@@ -45,6 +45,10 @@ static Options parse_args(int argc, char *argv[])
             o.verbose = 1;
         } else if (strcmp(argv[i], "--debug") == 0) {
             o.debug = 1;
+        } else if (strcmp(argv[i], "-l") == 0) {
+            if (i + 1 >= argc) { fprintf(stderr, "error: -l requires argument\n"); exit(1); }
+            strncat(o.ldflags, " -l", sizeof(o.ldflags) - strlen(o.ldflags) - 1);
+            strncat(o.ldflags, argv[++i], sizeof(o.ldflags) - strlen(o.ldflags) - 1);
         } else {
             fprintf(stderr, "error: unknown option '%s'\n", argv[i]);
             usage(argv[0]);
@@ -125,7 +129,6 @@ int main(int argc, char *argv[])
                     }
                 }
             }
-
             else if (node.type == AST_RETURN) {
                 if (node.left_str[0] && !is_num_str(node.left_str)) {
                     for (int v = 0; v < var_count; v++) {
@@ -136,7 +139,6 @@ int main(int argc, char *argv[])
                     }
                 }
             }
-
             else if (node.type == AST_IF) {
                 node.if_id = if_counter;
                 if_stack[if_top++] = if_counter++;
@@ -217,7 +219,7 @@ int main(int argc, char *argv[])
     if (opts.verbose)
         printf(":: linking %s\n", opts.output);
 
-    snprintf(cmd, sizeof(cmd), "gcc -no-pie %s -o %s 2>&1", obj_path, opts.output);
+    snprintf(cmd, sizeof(cmd), "gcc -no-pie %s -o %s%s 2>&1", obj_path, opts.output, opts.ldflags);
     if (system(cmd) != 0) {
         fprintf(stderr, "%s: error: linker failed\n", opts.input);
         return 1;
